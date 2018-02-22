@@ -115,5 +115,21 @@ public class main {
         	}
         });
         
+      //DELETE SPECIFIC CONTACT
+        delete("/contact/:name", (req,res)-> {
+        	String name = req.params(":name");
+        	if(mainManager.contains(name))
+        	{
+        		mainManager.deleteContact(name);
+            	res.status(200);
+            	return ("Success! Deleted" + name);
+        	}
+        	else
+        	{
+        		res.status(404);
+        		return "That name has not been found in our Address Book";
+        	}
+        });
+        
     }
 }
