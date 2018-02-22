@@ -6,8 +6,8 @@ to use: run main.java
 ****Notes below in order of importance****
 
 1) Elasticsearch now has their own java rest api, using it seems to defeat the purpose of this exercise so I did not.
-	- However a large portion of their documentation for Java is outdated. Nodes and transportclients have been deprecated to promote their own Java API.
-	- So I built this first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
+	- However a large portion of their documentation for Java is outdated. Some classes + methods have been deprecated.
+	- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
 2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
 	- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
 	- $ ./curl.exe http://localhost:8081/hello
