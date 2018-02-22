@@ -14,7 +14,8 @@ public class contact {
     private String email;
     private String phoneNumber;
     
-    public contact(){
+    public contact(){ //This is because every contact needs a name. SHould never be used.
+    	name = "Error occured. probs Manager get call without contains check first";
     }
     
     public contact(String name)

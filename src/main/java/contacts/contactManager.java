@@ -63,6 +63,19 @@ public class contactManager {
         return false;
     }
     
+    public contact getContact(String name)
+    {
+    	for(contact c: contactList)
+    	{
+    		if(name.equals(c.toString()))
+    		{return c;}
+    	}
+    	//This is pretty sloppy code and assumes contains will always be called beforehand.
+    	contact nullContact = new contact();
+    	return nullContact;
+    }
+    
+    
     public boolean deleteContact(String name) 
     {
         for(contact c : contactList)
