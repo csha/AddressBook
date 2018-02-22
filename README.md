@@ -20,4 +20,4 @@ to use: run main.java
 4) get "/contact/:name" might not be able to handle names with spaces. 
 	- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
 	- Command above will fail in powershell with message "can not resolve host"
-5) port can be changed by changing the variable "portToUse" near the top of this class file.
+5) ports can be changed by changing the variable "portToUse"(main.java) & "portElasticSearch"(contactManager.java) near the top of this class file.
