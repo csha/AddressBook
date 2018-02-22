@@ -1,13 +1,46 @@
 package contacts;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  *
  * @author danie
+ * 
+ * Note: this class can use either elasticsearch storage or built in arrayList storage.
+ * The reason is because I created the arrayList based methods first for reference then the elasticsearch.
+ * 
+ * 
  */
 public class contactManager {
+	
+	static int portElasticSearch = 9300;
     private static ArrayList<contact> contactList = new ArrayList<contact>();
+    private static ObjectMapper managerMapper = new ObjectMapper();
+    
+    
+    static TransportClient client = new PreBuiltTransportClient(Settings.EMPTY)
+	        .addTransportAddress(new TransportAddress(new InetSocketAddress("localhost", portElasticSearch)));
+	
     
     //Constructors
     public contactManager(){}
@@ -23,11 +56,113 @@ public class contactManager {
     public void setContactList(ArrayList<contact> contactList)
     {contactManager.contactList = contactList;}
     
-    public static void addContact(contact newContact)
+    public static void addContact(contact newContact) throws JsonProcessingException
     {
         contactList.add(newContact);
+        String jsonString = managerMapper.writeValueAsString(newContact);
+        //Index = addressBook, type = contact
+        IndexResponse response = client.prepareIndex("addressBook", "contact")
+                .setSource(jsonString, XContentType.JSON)
+                .get();
+        
     }
     
+    public static boolean elasticPost(contact newContact ) throws JsonProcessingException
+    {
+    	ArrayList<String> results = testElasticGet(newContact.getName());
+    	if(results.size() > 0)
+    	{
+    		return false; //already exists
+    	}
+    	
+    	testElasticAdd(newContact);
+    	
+    	return true;
+    }
+    
+    public static boolean elasticDelete(contact newContact ) throws JsonProcessingException
+    {   	
+    	/*
+    	 * BulkByScrollResponse response =
+    	DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+        .filter(QueryBuilders.matchQuery("gender", "male")) 
+        .source("persons")                                  
+        .get();                                             
+
+		long deleted = response.getDeleted();        
+    	 * */
+    	
+    	
+    	QueryBuilder matchSpecificFieldQuery= QueryBuilders
+    			  .matchQuery("name", newContact.getName());
+
+      	SearchResponse response = client.prepareSearch().setQuery(matchSpecificFieldQuery).execute().actionGet();
+      	List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
+      	if(searchHits.size() == 0)
+    	{
+    		return false; //doesn't exist to delete
+    	}
+      	//String docId = "";
+      	//for(SearchHit h: searchHits)
+      	//{
+      	//	docId = h.getId();
+      	//}
+      	//DeleteResponse delResponse = client.prepareDelete().setQuery(matchSpecificFieldQuery)
+      		  //.get();
+      	
+      	BulkByScrollResponse delresponse = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+      			.filter(QueryBuilders.matchQuery("name", newContact.getName())) 
+      	        .source("addressbook")                                  
+      	        .get(); 
+      	
+    	return true;
+    }
+    
+    public static ArrayList<String> elasticGet(contact newContact) throws JsonProcessingException
+    {
+    	ArrayList<String> jsonResult = testElasticGet(newContact.getName());
+    	return jsonResult;
+    }
+    
+    public static void testElasticAdd(contact newContact ) throws JsonProcessingException
+    {
+    	String jsonString = managerMapper.writeValueAsString(newContact);
+        //Index = addressBook, type = contact
+        IndexResponse response = client.prepareIndex("addressbook", "contact")
+                .setSource(jsonString, XContentType.JSON)
+                .get();
+    }
+    
+    public static ArrayList<String> testElasticGet(String nameToFind) throws JsonProcessingException
+    {
+    	
+    	QueryBuilder matchSpecificFieldQuery= QueryBuilders
+  			  .matchQuery("name", nameToFind);
+  	
+    	
+    	SearchResponse response = client.prepareSearch().setQuery(matchSpecificFieldQuery).execute().actionGet();
+    	List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
+    	ArrayList<String> results = new ArrayList<String>();
+    	searchHits.forEach(
+    	  hit -> {
+    		  String toAdd = hit.getSourceAsString();
+    		  results.add(toAdd);
+    	  });
+    	return results;
+    }
+    
+    public static ArrayList<String> testElasticGetAll() throws JsonProcessingException
+    {
+    	SearchResponse response = client.prepareSearch().execute().actionGet();
+    	List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
+    	ArrayList<String> results = new ArrayList<String>();
+    	searchHits.forEach(
+    	  hit -> {
+    		  String toAdd = hit.getSourceAsString();
+    		  results.add(toAdd);
+    	  });
+    	return results;
+    }
     
     public boolean addContactByName(String name) //returns t/f on success/fail
     {

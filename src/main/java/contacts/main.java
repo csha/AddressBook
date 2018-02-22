@@ -1,8 +1,20 @@
 package contacts;
 
 import static spark.Spark.*;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+
 import org.apache.log4j.BasicConfigurator;
 import org.elasticsearch.*;
+import org.elasticsearch.action.support.TransportAction;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.client.*;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.*;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.elasticsearch.client.transport.*;
 import org.elasticsearch.node.Node;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,21 +25,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 	****Notes in order of importance****
  * 
  * 	1) Elasticsearch now has their own java rest api, using it seems to defeat the purpose of this exercise so I did not.
- * 		- However a large portion of their documentation for Java is outdated. Nodes and transportclients have been deprecated to promote their own Java API.
+ * 		- However a large portion of their documentation for Java is outdated. Nodes and transportclients(about to be) have been deprecated to promote their own Java API.
  * 		- So I built this first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
  * 	2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
  * 		- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
  * 		- $ ./curl.exe http://localhost:8081/hello
- * 		- $ ./curl.exe -X POST -d "name=frankStalone&address=PalmerSt" http://localhost:8081/contact
+ * 		- $ ./curl.exe -X POST -d "name=frankSobotka&address=PalmerSt" http://localhost:8081/contact
  *		- Side note* newest windows powershell created an alias for "curl" to invoke "Invoke-WebRequest" instead. Call curl.exe to resolve.
  * 	3) post uses queryParams {name & address & email & number} to resolve.
  * 		- Must provide name queryParam. All others are optional.
  * 		- Not sure if this is correct, but google doc didn't specify a method to require these attributes.
  * 		- Will still create contact if any of three attributes besides name has length > reasonable amount, but will be set to N/A
  * 	4) get/put/delete "/contact/:name" might not be able to handle names with spaces. 
- * 		- $ ./curl.exe http://localhost:8081/contact/frank Stalone
+ * 		- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
  * 		- Command above will fail in powershell with message "can not resolve host"
- * 	5) port can be changed by changing the variable "portToUse" near the top of this class file.
+ * 	5) ports can be changed by changing the variable "portToUse"(main.java) & "portElasticSearch"(contactManager.java) near the top of this class file.
  * 	6) BasicConfigurator was imported to resolve an error. I still don't quite understand it to be honest.
  * 	 
  * 
@@ -35,15 +47,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class main {
 	
-	static int portToUse = 8081;  
+	static int portToUse = 8081;  //spark framework's port. curl commands target here. For elasticsearch, go to contactManager.java.
 	private static contactManager mainManager = new contactManager();
 	private static ObjectMapper mainMapper = new ObjectMapper();
+	
 	
 	public static void main(String[] args) {
 		BasicConfigurator.configure();
 		port(portToUse);
 		
-		//three test handlers to check Curl
+		//Four testing handlers to check Curl
         get("/hello", (req, res) -> "Hello World");
         
         put("/hello", (req, res)->
@@ -55,10 +68,7 @@ public class main {
         	return name;
         });
         
-        
-        //required handlers for Address Book
-        //GET ALL + Query
-        get("/contact", (req, res)-> {
+        get("/contact/elastic/:name", (req, res)-> {
         	
         	String def = "N/A";
         	String defSize = "10";
@@ -66,10 +76,23 @@ public class main {
         	String pageSize = req.queryParamOrDefault("pageSize", defSize);
         	String pageOffset = req.queryParamOrDefault("pageOffset", defOffset);
         	String query = req.queryParamOrDefault("query", def);
+        	String name = "";
+        	name = req.params(":name");
         	
-            return "PLACEHOLDER PLACEHOLDER PLACEHOLDER PLACEHOLDER";
+        	contact elasticTestContact = new contact("simon2","yowza","goodEmail","badNum");
+        	contactManager.testElasticAdd(elasticTestContact);
+        	ArrayList<String> myResults = contactManager.testElasticGet(name);
+        	String toReturn = "";
+        	for(int i = 0; i < myResults.size(); i++)
+        	{
+        		toReturn = (toReturn + (myResults.get(i)));
+        	}
+        	return mainMapper.writeValueAsString(toReturn);
         });
         
+        
+        //required handlers for Address Book
+        //GET ALL + Query
         //POST
         post("/contact", (req, res)->{
         	String name = req.queryParams("name");
@@ -77,17 +100,16 @@ public class main {
         	String address = req.queryParamOrDefault("address", def);
         	String email = req.queryParamOrDefault("email", def);
         	String number = req.queryParamOrDefault("number", def);
-        	if(mainManager.contains(name)) //has to be unique
+        	contact newContact = new contact(name, address, email, number);
+        	if(contactManager.elasticPost(newContact)) //has to be unique
         		{
-        			res.status(403);
-        			return "Name is unique and already in contacts";
+        			res.status(201);
+        			return "Success!";
         		}
         	else
         	{
-        		contact newContact = new contact(name, address, email, number);
-        		contactManager.addContact(newContact);
-        		res.status(201);
-        		return "Success! \n" + mainMapper.writeValueAsString(newContact);
+        		res.status(403);
+    			return "Name is unique and already in contacts";
         	}
         	
         });
@@ -95,16 +117,13 @@ public class main {
         //GET SPECIFIC CONTACT
         get("/contact/:name", (req,res)-> {
         	String name = req.params(":name");
-        	if(mainManager.contains(name))
+        	contact getContact = new contact(name);
+        	ArrayList<String> jsonStringList = contactManager.elasticGet(getContact);
+        	if(jsonStringList.size() == 0) 
+        	{res.status(404); return "That name has not been found in our Address Book";}
+        	else 
         	{
-        		res.status(200);
-        		contact desiredContact = mainManager.getContact(name);
-        		return "Success! \n" + mainMapper.writeValueAsString(desiredContact);
-        	}
-        	else
-        	{
-        		res.status(404);
-        		return "That name has not been found in our Address Book";
+        		return mainMapper.writeValueAsString(jsonStringList);
         	}
         		});
         
@@ -132,10 +151,10 @@ public class main {
       //DELETE SPECIFIC CONTACT
         delete("/contact/:name", (req,res)-> {
         	String name = req.params(":name");
-        	if(mainManager.contains(name))
+        	contact contactToDelete = new contact(name);
+        	if(contactManager.elasticDelete(contactToDelete))
         	{
-        		mainManager.deleteContact(name);
-            	res.status(200);
+        		res.status(200);
             	return ("Success! Deleted" + name);
         	}
         	else
