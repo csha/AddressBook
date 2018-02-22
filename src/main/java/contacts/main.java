@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 	****Notes in order of importance****
  * 
  * 	1) Elasticsearch now has their own java rest api, using it seems to defeat the purpose of this exercise so I did not.
- * 		- However a large portion of their documentation for Java is outdated. Nodes and transportclients(about to be) have been deprecated to promote their own Java API.
- * 		- So I built this first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
+ * 		- However a large portion of their documentation for Java is outdated. Some classes + methods have been deprecated.
+ * 		- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
  * 	2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
  * 		- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
  * 		- $ ./curl.exe http://localhost:8081/hello
@@ -40,7 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 		- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
  * 		- Command above will fail in powershell with message "can not resolve host"
  * 	5) ports can be changed by changing the variable "portToUse"(main.java) & "portElasticSearch"(contactManager.java) near the top of this class file.
- * 	6) BasicConfigurator was imported to resolve an error. I still don't quite understand it to be honest.
+ * 	
  * 	 
  * 
  */
@@ -56,7 +56,7 @@ public class main {
 		BasicConfigurator.configure();
 		port(portToUse);
 		
-		//Four testing handlers to check Curl
+		//Four testing handlers to check Curl commands
         get("/hello", (req, res) -> "Hello World");
         
         put("/hello", (req, res)->
@@ -129,23 +129,27 @@ public class main {
         
         //PUT SPECIFIC CONTACT
         put("/contact/:name", (req,res)-> {
-        	String name = req.params(":name");
-        	if(mainManager.contains(name))
-        	{
-        		String def = "N/A";
-            	String address = req.queryParamOrDefault("address", def);
-            	String email = req.queryParamOrDefault("email", def);
-            	String number = req.queryParamOrDefault("number", def);
-            	contact desiredContact = mainManager.getContact(name);
-            	mainManager.replace(desiredContact, address, email, number);
-            	res.status(200);
-            	return "Success! \n" + mainMapper.writeValueAsString(desiredContact);
-        	}
-        	else
-        	{
-        		res.status(404);
-        		return "That name has not been found in our Address Book";
-        	}
+        		String name = req.params(":name");
+            	contact oldContact = new contact(name);
+            	ArrayList<String> jsonStringList = contactManager.elasticGet(oldContact);
+            	if(jsonStringList.size() == 0) 
+            	{res.status(404); return "That name has not been found in our Address Book";}
+            	
+            		contactManager.elasticDelete(oldContact);
+            		
+            		String newName = req.params(":name");
+            		String def = "N/A";
+                	String address = req.queryParamOrDefault("address", def);
+                	String email = req.queryParamOrDefault("email", def);
+                	String number = req.queryParamOrDefault("number", def);
+            		contact desiredContact = new contact(newName, address, email, number);
+            		
+            		if(contactManager.elasticPutAdd(desiredContact))
+            		{res.status(200);
+            		return("Success!");}
+            		
+            		else {res.status(400);return "Unexpected Failure";}
+            	
         });
         
       //DELETE SPECIFIC CONTACT

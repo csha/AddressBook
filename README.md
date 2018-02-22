@@ -21,4 +21,3 @@ to use: run main.java
 	- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
 	- Command above will fail in powershell with message "can not resolve host"
 5) port can be changed by changing the variable "portToUse" near the top of this class file.
-6) BasicConfigurator was imported to resolve an error. I still don't quite understand it to be honest.

@@ -27,7 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author danie
  * 
  * Note: this class can use either elasticsearch storage or built in arrayList storage.
- * The reason is because I created the arrayList based methods first for reference then the elasticsearch.
+ * The reason is because I created the arrayList based methods first then the elasticsearch.
+ * The storages (addressbooks) are independent of one another. main.java currently uses the elasticsearch.
  * 
  * 
  */
@@ -78,6 +79,13 @@ public class contactManager {
     	testElasticAdd(newContact);
     	
     	return true;
+    }
+    
+    public static boolean elasticPutAdd(contact newContact) throws JsonProcessingException
+    {
+    	testElasticAdd(newContact);
+    		return true;
+    	
     }
     
     public static boolean elasticDelete(contact newContact ) throws JsonProcessingException
