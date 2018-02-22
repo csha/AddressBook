@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 		- Must provide name queryParam. All others are optional.
  * 		- Not sure if this is correct, but google doc didn't specify a method to require these attributes.
  * 		- Will still create contact if any of three attributes besides name has length > reasonable amount, but will be set to N/A
- * 	3) get "/contact/:name" might not be able to handle names with spaces. 
+ * 	3) get/put/delete "/contact/:name" might not be able to handle names with spaces. 
  * 		- $ ./curl.exe http://localhost:8081/contact/frank Stalone
  * 		- Command above will fail in powershell with message "can not resolve host"
  * 	4) port can be changed by changing the variable "portToUse" near the top of this class file.
@@ -94,6 +94,26 @@ public class main {
         	}
         		});
         
+        //PUT SPECIFIC CONTACT
+        put("/contact/:name", (req,res)-> {
+        	String name = req.params(":name");
+        	if(mainManager.contains(name))
+        	{
+        		String def = "N/A";
+            	String address = req.queryParamOrDefault("address", def);
+            	String email = req.queryParamOrDefault("email", def);
+            	String number = req.queryParamOrDefault("number", def);
+            	contact desiredContact = mainManager.getContact(name);
+            	mainManager.replace(desiredContact, address, email, number);
+            	res.status(200);
+            	return "Success! \n" + mainMapper.writeValueAsString(desiredContact);
+        	}
+        	else
+        	{
+        		res.status(404);
+        		return "That name has not been found in our Address Book";
+        	}
+        });
         
     }
 }

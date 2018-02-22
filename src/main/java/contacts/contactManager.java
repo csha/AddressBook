@@ -63,6 +63,22 @@ public class contactManager {
         return false;
     }
     
+    public void replace(contact oldCt, String address, String email, String number)
+    {
+    	if(!(address.equals("N/A")))
+    	{
+    		oldCt.setAddress(address);
+    	}
+    	if(!(email.equals("N/A")))
+    	{
+    		oldCt.setEmail(email);
+    	}
+    	if(!(number.equals("N/A")))
+    	{
+    		oldCt.setPhoneNumber(number);
+    	}
+    }
+    
     public contact getContact(String name)
     {
     	for(contact c: contactList)
