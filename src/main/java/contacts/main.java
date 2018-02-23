@@ -5,17 +5,23 @@ import static spark.Spark.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.log4j.BasicConfigurator;
 import org.elasticsearch.*;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.TransportAction;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.client.*;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.*;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.elasticsearch.client.transport.*;
 import org.elasticsearch.node.Node;
+import org.elasticsearch.search.SearchHit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,9 +30,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * 	****Notes in order of importance****
  * 
- * 	1) Elasticsearch now has their own java rest api, using it seems to defeat the purpose of this exercise so I did not.
- * 		- However a large portion of their documentation for Java is outdated. Some classes + methods have been deprecated.
- * 		- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
+ * 	1) All methods besides get Contact/?pageSize={}&pageOffset={}&query={} work.
+ * 		- I wrote the theoretical (untested) code below (lines 72 - 148) on potential correct implementation, but commented out so this can compile.
+ * 		- I spent a long time trying but could not figure out why queryParamOrDefault always returns the default value.
+ * 		- I am also unsure how to enter a querystring in curl as double quotations ruin the command in powershell. Single quotations dont appear to work either.
  * 	2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
  * 		- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
  * 		- $ ./curl.exe http://localhost:8081/hello
@@ -40,7 +47,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 		- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
  * 		- Command above will fail in powershell with message "can not resolve host"
  * 	5) ports can be changed by changing the variable "portToUse"(main.java) & "portElasticSearch"(contactManager.java) near the top of this class file.
- * 	
+ * 	6) Elasticsearch now has their own java rest api, and is deprecating many methods/classes rendering much documentation obsolete.
+		- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
  * 	 
  * 
  */
@@ -50,49 +58,95 @@ public class main {
 	static int portToUse = 8081;  //spark framework's port. curl commands target here. For elasticsearch, go to contactManager.java.
 	private static contactManager mainManager = new contactManager();
 	private static ObjectMapper mainMapper = new ObjectMapper();
-	
+
 	
 	public static void main(String[] args) {
 		BasicConfigurator.configure();
 		port(portToUse);
 		
-		//Four testing handlers to check Curl commands
-        get("/hello", (req, res) -> "Hello World");
-        
-        put("/hello", (req, res)->
-        {return "put Success!!";
-        });
-        
-        post("/hello", (req, res)->
-        {String name = req.queryParams("name");
-        	return name;
-        });
-        
-        get("/contact/elastic/:name", (req, res)-> {
-        	
-        	String def = "N/A";
-        	String defSize = "10";
-        	String defOffset = "0";
-        	String pageSize = req.queryParamOrDefault("pageSize", defSize);
-        	String pageOffset = req.queryParamOrDefault("pageOffset", defOffset);
-        	String query = req.queryParamOrDefault("query", def);
-        	String name = "";
-        	name = req.params(":name");
-        	
-        	contact elasticTestContact = new contact("simon2","yowza","goodEmail","badNum");
-        	contactManager.testElasticAdd(elasticTestContact);
-        	ArrayList<String> myResults = contactManager.testElasticGet(name);
-        	String toReturn = "";
-        	for(int i = 0; i < myResults.size(); i++)
-        	{
-        		toReturn = (toReturn + (myResults.get(i)));
-        	}
-        	return mainMapper.writeValueAsString(toReturn);
-        });
-        
-        
+                
         //required handlers for Address Book
-        //GET ALL + Query
+        //GET
+		/*Code currently only returns first 20 entities. 
+		 * Theoretical (untested) code to correctly implement requirements is commented out*/
+        get("/contact", (req, res)-> {
+        	String def = "N/A";
+        	String defSize = "20";
+        	String defOffset = "0";
+        	//for some reason these three fields are always going to default.
+        	//even though queryParamOrDefault works for POST below.
+        	String pageSz = req.queryParamOrDefault("pageSize",defSize);
+        	String pageOff = req.queryParamOrDefault("pageOffset", defOffset);
+        	String query = req.queryParamOrDefault("query", def);
+        	
+        	int pSize = 0; int pOff = 0;
+        	pSize = Integer.valueOf(pageSz);
+        	pOff = Integer.valueOf(pageOff);
+        	if(pSize <= 0) {pSize = 100;}
+        	if(pOff < 0) {pOff = 0;}
+        	
+        	if(query.equals("N/A"))
+        	{
+        		int startingIndex = pSize * pOff;
+        		int finishIndex = startingIndex + pSize;
+        		ArrayList<String> resultList = contactManager.testElasticGetAll();
+        		ArrayList<String> cutList = new ArrayList<String>();
+        		if(startingIndex > resultList.size()-1) {return "";}
+        		else {
+        			for (int i = startingIndex; i < finishIndex; i++)
+        			{
+        				cutList.add(resultList.get(i));
+        				if (i + 1 >= resultList.size()) {break;}
+        			}
+        		}
+        		//Should be return mainMapper.writeValueAsString(cutList);
+        		//but the params always go to the default value for some reason I cannot figure out.
+        		return mainMapper.writeValueAsString(resultList);
+        	}
+        	else //it never reaches else right now, even if -d "query={querystringhere} is entered
+        	{
+        		/*The correct implementation might use something such as
+        		call contactManager.querySearchMethod(query);
+        		
+        		
+        		Method in contactManager class:
+        		public static ArrayList<String> querySearchMethod(String query)
+        		{
+        			QueryBuilder myQuery = QueryBuilders.queryStringQuery(query)
+        			SearchResponse response = client.prepareSearch().setQuery(myQuery).execute().actionGet();
+    				List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
+    				ArrayList<String> results = new ArrayList<String>();
+    				searchHits.forEach(
+    	  			hit -> {
+    		  			String toAdd = hit.getSourceAsString();
+    		  			results.add(toAdd);
+    	  			});
+    				return results;
+        		}
+        		
+        		
+        		then with results, use same method as posted above to return only page/offset results
+        		
+        		int startingIndex = pSize * pOff;
+        		int finishIndex = startingIndex + pSize;
+        		ArrayList<String> resultList = contactManager.querySearchMethod(query)
+        		if(startingIndex > resultList.size()-1) {return "";}
+        		else {
+        			for (int i = startingIndex; i < finishIndex; i++)
+        			{
+        				cutList.add(resultList.get(i));
+        				if (i + 1 >= resultList.size()) {break;}
+        			}
+        		}
+        		
+        		return mainMapper.writeValueAsString(cutList);
+        		 
+        		 * */
+        		return "placeholder";
+        	}
+        	
+        });
+        
         //POST
         post("/contact", (req, res)->{
         	String name = req.queryParams("name");

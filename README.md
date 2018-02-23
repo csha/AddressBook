@@ -1,13 +1,14 @@
 Address Book
 Author: Daniel Sha
 
-to use: run main.java
+to use(windows): (run elasticsearch.exe, run main.java)
 
 ****Notes below in order of importance****
 
-1) Elasticsearch now has their own java rest api, using it seems to defeat the purpose of this exercise so I did not.
-	- However a large portion of their documentation for Java is outdated. Some classes + methods have been deprecated.
-	- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
+1) All methods besides get Contact/?pageSize={}&pageOffset={}&query={} work.
+	- I wrote the theoretical (untested) code in main.java (Lines 74 - 148) on potential correct implementation, but commented out so program can compile.
+  	- I spent a long time trying but could not figure out why queryParamOrDefault always returns the default value in this method, but it works for Post.
+  	- I am also unsure how to enter a querystring in curl as double quotations ruin the command in powershell. Single quotations dont appear to work either.
 2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
 	- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
 	- $ ./curl.exe http://localhost:8081/hello
@@ -21,3 +22,5 @@ to use: run main.java
 	- $ ./curl.exe http://localhost:8081/contact/frank Sobotka
 	- Command above will fail in powershell with message "can not resolve host"
 5) ports can be changed by changing the variable "portToUse"(main.java) & "portElasticSearch"(contactManager.java) near the top of this class file.
+6) Elasticsearch now has their own java rest api, and is deprecating many methods/classes rendering much documentation obsolete.
+	- Thus this was built first using an arrayList/JSON instead of Indexes and attempted to integrate Elasticsearch afterwards.
