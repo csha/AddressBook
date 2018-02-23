@@ -10,9 +10,11 @@ to use(windows): (run elasticsearch.exe, run main.java)
   	- I spent a long time trying but could not figure out why queryParamOrDefault always returns the default value in this method, but it works for Post.
   	- I am also unsure how to enter a querystring in curl as double quotations ruin the command in powershell. Single quotations dont appear to work either.
 2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
-	- 2 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
+	- 4 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
 	- $ ./curl.exe -X POST -d "name=frankSobotka&address=PalmerSt" http://localhost:8081/contact
 	- $ ./curl.exe -X GET http://localhost:8081/contact/frankSobotka
+	- $ ./curl.exe -X PUT -d "address=NewAddress" http://localhost:8081/contact/frankSobotka
+	- $ ./curl.exe -X DELETE http://localhost:8081/contact/frankSobotka
 	- Side note* newest windows powershell created an alias for "curl" to invoke "Invoke-WebRequest" instead. Call curl.exe to resolve.
 3) post uses queryParams {name & address & email & number} to resolve.
 	- Ex: $ ./curl.exe -X POST -d "name=FrankSobotka&address=Baltimore&email=baltimoreman@gmail.com&number=5555555" http://localhost:8081/contact
