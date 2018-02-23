@@ -15,6 +15,7 @@ to use(windows): (run elasticsearch.exe, run main.java)
 	- $ ./curl.exe -X GET http://localhost:8081/contact/frankSobotka
 	- Side note* newest windows powershell created an alias for "curl" to invoke "Invoke-WebRequest" instead. Call curl.exe to resolve.
 3) post uses queryParams {name & address & email & number} to resolve.
+	- Ex: $ ./curl.exe -X POST -d "name=FrankSobotka&address=Baltimore&email=baltimoreman@gmail.com&number=5555555" http://localhost:8081/contact
 	- Must provide name queryParam. All others are optional.
 	- Not sure if this is correct, but google doc didn't specify a method to require these attributes.
 	- Will still create contact if any of three attributes besides name has length > reasonable amount, but will be set to N/A
