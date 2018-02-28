@@ -1,8 +1,5 @@
 package contacts;
 
-
-
-
 public class contact {
     int maxAddressLength = 50;
     int maxEmailLength = 50;

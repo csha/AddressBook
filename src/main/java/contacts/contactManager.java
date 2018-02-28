@@ -52,7 +52,7 @@ public class contactManager {
     {contactManager.contactList = contactList;}
     
     
-    public static void validateContact(contact givenContact)
+    public static synchronized void validateContact(contact givenContact)
     {
     	if(givenContact.getAddress().length() >= maxFieldLength)
     	{givenContact.setAddress("N/A");}
@@ -63,8 +63,7 @@ public class contactManager {
     }
     
     
-    
-    public static boolean elasticPost(contact newContact ) throws JsonProcessingException
+    public static synchronized boolean elasticPost(contact newContact ) throws JsonProcessingException
     {
     	ArrayList<String> results = testElasticGet(newContact.getName());
     	if(results.size() > 0)
@@ -76,7 +75,7 @@ public class contactManager {
     	return true;
     }
     
-    public static boolean elasticDelete(contact newContact ) throws JsonProcessingException
+    public static synchronized boolean elasticDelete(contact newContact ) throws JsonProcessingException
     {   	
     	
     	QueryBuilder matchSpecificFieldQuery= QueryBuilders
@@ -97,7 +96,7 @@ public class contactManager {
     	return true;
     }
     
-    public static boolean elasticQuery(contact newContact ) throws JsonProcessingException
+    public static synchronized boolean elasticQuery(contact newContact ) throws JsonProcessingException
     {
     	ArrayList<String> results = testElasticGet(newContact.getName());
     	if(results.size() > 0)
@@ -110,7 +109,7 @@ public class contactManager {
     	return true;
     }
     
-    public static boolean elasticPutAdd(contact newContact) throws JsonProcessingException
+    public static synchronized boolean elasticPutAdd(contact newContact) throws JsonProcessingException
     {
     	validateContact(newContact);
     	testElasticAdd(newContact);
@@ -118,7 +117,22 @@ public class contactManager {
     	
     }
     
-    public static ArrayList<String> querySearchMethod(String query)
+    public static synchronized boolean elasticPut(contact contactToMod) throws JsonProcessingException
+    {
+    	ArrayList<String> jsonStringList = contactManager.elasticGet(contactToMod);
+    	if(jsonStringList.size() == 0) {return false;}
+    	elasticDelete(contactToMod);
+    	String name = contactToMod.getName();
+    	String address = contactToMod.getAddress();
+    	String email = contactToMod.getEmail();
+    	String number = contactToMod.getPhoneNumber();
+    	contact desiredContact = new contact(name, address, email, number);
+    	if(contactManager.elasticPutAdd(desiredContact)) {return true;}
+    	else {return false;}
+    	
+    }
+    
+    public static synchronized ArrayList<String> querySearchMethod(String query)
 	{
 		QueryBuilder myQuery = QueryBuilders.queryStringQuery(query);
 		SearchResponse response = client.prepareSearch().setQuery(myQuery).execute().actionGet();
@@ -134,13 +148,13 @@ public class contactManager {
     
     
     
-    public static ArrayList<String> elasticGet(contact newContact) throws JsonProcessingException
+    public static synchronized ArrayList<String> elasticGet(contact newContact) throws JsonProcessingException
     {
     	ArrayList<String> jsonResult = testElasticGet(newContact.getName());
     	return jsonResult;
     }
     
-    public static void testElasticAdd(contact newContact ) throws JsonProcessingException
+    public static synchronized void testElasticAdd(contact newContact ) throws JsonProcessingException
     {
     	String jsonString = managerMapper.writeValueAsString(newContact);
         //Index = addressBook, type = contact
@@ -149,7 +163,7 @@ public class contactManager {
                 .get();
     }
     
-    public static ArrayList<String> testElasticGet(String nameToFind) throws JsonProcessingException
+    public static synchronized ArrayList<String> testElasticGet(String nameToFind) throws JsonProcessingException
     {
     	
     	QueryBuilder matchSpecificFieldQuery= QueryBuilders
@@ -168,7 +182,7 @@ public class contactManager {
     	return results;
     }
     
-    public static ArrayList<String> testElasticGetAll() throws JsonProcessingException
+    public static synchronized ArrayList<String> testElasticGetAll() throws JsonProcessingException
     {
     	SearchResponse response = client.prepareSearch().execute().actionGet();
     	List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
