@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 public class JUnitTests {
 
 	//Because names have to be unique, these strings should be changed accordingly.
+	//On the first run, GET, Delete, and Put should fail if the respective string:contact pairs do not already exist.
 	static String uniqueNamePost = "JohnWick32";
 	static String uniqueNameGet = "JohnWick21";
 	static String uniqueNameDelete = "JohnWick31";
