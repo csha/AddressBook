@@ -67,7 +67,7 @@ public class main {
                 
         //required handlers for Address Book
         //GET
-		/*Code currently had bug and always defaults from queryParamOrDefault*/
+		/*Code currently has bug and always defaults from queryParamOrDefault*/
         get("/contact", (req, res)-> {
         	String def = "N/A";
         	String defSize = "20";
@@ -86,12 +86,13 @@ public class main {
         	
         	if(query.equals("N/A"))
         	{
-        		int startingIndex = pSize * pOff;
+        		int startingIndex = pSize * pOff + 1;
         		int finishIndex = startingIndex + pSize;
         		ArrayList<String> resultList = contactManager.testElasticGetAll();
         		ArrayList<String> cutList = new ArrayList<String>();
         		if(startingIndex > resultList.size()-1) {return "";}
         		else {
+        			if(finishIndex > resultList.size()-1) {finishIndex = resultList.size()-1;}
         			for (int i = startingIndex; i < finishIndex; i++)
         			{
         				cutList.add(resultList.get(i));

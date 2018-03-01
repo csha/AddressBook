@@ -16,7 +16,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 public class JUnitTests {
 	
-	//There are currently 5 Unit tests. (Query/Get/Post/Delete/Put)
+	//There are currently 6 Unit tests. (Query/Get/Post/Delete/Put/Page Alg.)
+	//	Methods to test are: 
+	// 	Query): contactManager.querySearchMethod(givenQuery)
+	// 	Post): contactManager.elasticPost(testingPostContact)
+	// 	Get): contactManager.elasticGet(testingGetContact)
+	// 	Delete): contactManager.elasticDelete(testingDeleteContact)
+	// 	Put): contactManager.elasticGet(testingPutContact2)
 	
 	//Because names have to be unique, these strings should be changed accordingly with each run.
 	//On the first run: Get, Delete, and Put should fail if the respective (uniqueNameString:contact) pairs do not already exist.
@@ -43,6 +49,7 @@ public class JUnitTests {
 		contactManager.elasticPost(queryContactToAdd4);
 		
 		//Set query String **Note you have to escape everything pretty much
+		//	Need Escapes:			+ - = && || > < ! ( ) { } [ ] ^ " ~ * ? : \ /
 		String givenQuery = "\\{\"query_string\"\\:\\{\"address\"\\:\"Chicago\"\\}\\}";
 		
 		//contactManager.querySearchMethod(givenQuery):
@@ -113,10 +120,49 @@ public class JUnitTests {
 		String actualResult;
 		contact testingPutContact2 = new contact(uniqueNamePut);
 		ArrayList<String> resultList = contactManager.elasticGet(testingPutContact2);
-		actualResult = resultList.get(0);
-		assertEquals(expectedResult, actualResult);
+		if(!(resultList.isEmpty()))
+			{
+				actualResult = resultList.get(0);
+				assertEquals(expectedResult, actualResult);
+			}
 		
 	}
 	
+	@Test
+	public void testPageAlgorithm()
+	{
+		//Creating the test data. 
+		ArrayList<Integer> testingList = new ArrayList<Integer>();
+		for(int i = 1; i <= 100; i ++)
+		{
+			testingList.add(i);
+		}
+		
+		//Setting desired page and index.
+		int pageSize = 5;
+		int pageOff = 3;
+		int startingIndex = pageSize * pageOff + 1;
+		int finishingIndex = startingIndex + pageOff;
+		
+		//Setting up test
+		ArrayList<Integer> cutList = new ArrayList<Integer>();
+		ArrayList<Integer> expectedList = new ArrayList<Integer>();
+		expectedList.add(16); expectedList.add(17); expectedList.add(18); 
+		
+		//Actual algorithm pasted from main.java
+		if(startingIndex <= testingList.size()-1) 
+		{
+			if(finishingIndex > testingList.size()-1) {finishingIndex = testingList.size()-1;}
+			
+			for (int i = startingIndex; i < finishingIndex; i++)
+			{
+				
+				cutList.add(i);
+			}
+		}
+		
+		assertEquals(expectedList, cutList);
+		
+	}
 	
 }
