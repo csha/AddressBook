@@ -5,12 +5,12 @@ to use(windows): (run elasticsearch.exe, run main.java)
 
 ****Notes below in order of importance****
 
-1) All methods besides get Contact/?pageSize={}&pageOffset={}&query={} work.
-	- I wrote the theoretical (untested) code in main.java (Lines 74 - 148) on potential correct implementation, but commented out so program can compile.
-  	- I spent a long time trying but could not figure out why queryParamOrDefault always returns the default value in this method, but it works for Post.
-  	- I am also unsure how to enter a querystring in curl as double quotations ruin the command in powershell. Single quotations dont appear to work either.
-2) Testing was done using "curl". This Java App works under the assumption that curl testing is accurate and fulfills the challenge's requirements.
-	- 4 Examples of curl command (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
+1) All handlers in main.java besides get Contact/?pageSize={}&pageOffset={}&query={} work.
+	- The method: contactManager.querySearchMethod(givenQuery) works.
+  	- Problem is that queryParamOrDefault always returns the default value in @get, but it works properly for @Post.
+2) Testing was done using "curl" and unitTesting. 
+	- Run JUnitTests.java for unit tests.
+	- 4 Examples of curl command testing (assuming cwd is curl.exe folder like "D:\code\curl\curl-7.58.0-win64-mingw\bin"
 	- $ ./curl.exe -X POST -d "name=frankSobotka&address=PalmerSt" http://localhost:8081/contact
 	- $ ./curl.exe -X GET http://localhost:8081/contact/frankSobotka
 	- $ ./curl.exe -X PUT -d "address=NewAddress" http://localhost:8081/contact/frankSobotka
