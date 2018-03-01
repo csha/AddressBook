@@ -38,7 +38,7 @@ public class JUnitTests {
 		ObjectMapper objMapper = new ObjectMapper();
 		
 		//Below code ensures that the desired query items are created.
-		//ElasticPost will automatically prevent a contact from being added if 
+		//elasticPost() will automatically prevent a contact from being added if the name is taken
 		contact queryContactToAdd1 = new contact("kanyeWestClone1", "Chicago", "gr8est@gmail.com", "19003334444");
 		contact queryContactToAdd2 = new contact("kanyeWestClone2", "Chicago", "gr8est@gmail.com", "19003334444");
 		contact queryContactToAdd3 = new contact("kanyeWestClone3", "Chicago", "gr8est@gmail.com", "19003334444");
@@ -61,7 +61,7 @@ public class JUnitTests {
 			System.out.println(resultList.get(i));
 		}
 			
-		//Expected Result contains all the Kanye West Contacts Listed above.
+		//Expected Result contains all the KanyeWest Contacts Listed above.
 		String expectedResult = "[\"{\\\"name\\\":\\\"TheRealKanyeWest\\\",\\\"address\\\":\\\"Chicago\\\",\\\"email\\\":\\\"gr8est@gmail.com\\\",\\\"phoneNumber\\\":\\\"19003334444\\\"}\",\"{\\\"name\\\":\\\"kanyeWestClone3\\\",\\\"address\\\":\\\"Chicago\\\",\\\"email\\\":\\\"gr8est@gmail.com\\\",\\\"phoneNumber\\\":\\\"19003334444\\\"}\",\"{\\\"name\\\":\\\"kanyeWestClone1\\\",\\\"address\\\":\\\"Chicago\\\",\\\"email\\\":\\\"gr8est@gmail.com\\\",\\\"phoneNumber\\\":\\\"19003334444\\\"}\",\"{\\\"name\\\":\\\"kanyeWestClone2\\\",\\\"address\\\":\\\"Chicago\\\",\\\"email\\\":\\\"gr8est@gmail.com\\\",\\\"phoneNumber\\\":\\\"19003334444\\\"}\"]";
 		assertEquals(expectedResult, objMapper.writeValueAsString(resultList));
 	}
@@ -111,7 +111,7 @@ public class JUnitTests {
 	public void testPut() throws JsonProcessingException
 	{
 				// *Test succeeds if contact with uniqueNameDelete exists in elasticsearch.
-				//		*Note, this might interfere with other tests if uniqueNameDelete is same as uniqueNamePost, etc.
+				//		*Note, this might interfere with other tests if uniqueNameDelete is same as uniqueNamePut, etc.
 				// Tests the following:
 				// Deletes the contact with uniqueName
 		contact testingPutContact = new contact(uniqueNamePut, "add2", "email2", "num2");
