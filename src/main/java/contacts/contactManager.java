@@ -14,6 +14,7 @@ import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.search.SearchHit;
@@ -134,7 +135,7 @@ public class contactManager {
     
     public static synchronized ArrayList<String> querySearchMethod(String query)
 	{
-		QueryBuilder myQuery = QueryBuilders.queryStringQuery(query);
+		QueryStringQueryBuilder myQuery = QueryBuilders.queryStringQuery(query);
 		SearchResponse response = client.prepareSearch().setQuery(myQuery).execute().actionGet();
 		List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
 		ArrayList<String> results = new ArrayList<String>();

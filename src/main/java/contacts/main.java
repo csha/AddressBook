@@ -67,14 +67,13 @@ public class main {
                 
         //required handlers for Address Book
         //GET
-		/*Code currently only returns first 20 entities. 
-		 * Theoretical (untested) code to correctly implement requirements is commented out*/
+		/*Code currently had bug and always defaults from queryParamOrDefault*/
         get("/contact", (req, res)-> {
         	String def = "N/A";
         	String defSize = "20";
         	String defOffset = "0";
-        	//for some reason these three fields are always going to default.
-        	//even though queryParamOrDefault works for POST below.
+        	//for some reason these three fields below are always going to default.
+        	//even though queryParamOrDefault works for POST handler?
         	String pageSz = req.queryParamOrDefault("pageSize",defSize);
         	String pageOff = req.queryParamOrDefault("pageOffset", defOffset);
         	String query = req.queryParamOrDefault("query", def);
@@ -101,35 +100,18 @@ public class main {
         		}
         		//Should be return mainMapper.writeValueAsString(cutList);
         		//but the params always go to the default value for some reason I cannot figure out.
-        		return mainMapper.writeValueAsString(resultList);
+        		return mainMapper.writeValueAsString(cutList);
         	}
-        	else //it never reaches else right now, even if -d "query={querystringhere} is entered
+        	else 
+        		// BUG!
+        		//it never reaches else right now and will always go to above if clause
+        		//even if -d "query={querystringhere} is entered
+        		//As such, the below code is untested, as is the querySearchMethod method. 
         	{
-        		/*The correct implementation might use something such as
-        		call contactManager.querySearchMethod(query);
-        		
-        		
-        		Method in contactManager class:
-        		public static ArrayList<String> querySearchMethod(String query)
-        		{
-        			QueryBuilder myQuery = QueryBuilders.queryStringQuery(query)
-        			SearchResponse response = client.prepareSearch().setQuery(myQuery).execute().actionGet();
-    				List<SearchHit> searchHits = Arrays.asList(response.getHits().getHits());
-    				ArrayList<String> results = new ArrayList<String>();
-    				searchHits.forEach(
-    	  			hit -> {
-    		  			String toAdd = hit.getSourceAsString();
-    		  			results.add(toAdd);
-    	  			});
-    				return results;
-        		}
-        		
-        		
-        		then with results, use same method as posted above to return only page/offset results
-        		
         		int startingIndex = pSize * pOff;
         		int finishIndex = startingIndex + pSize;
-        		ArrayList<String> resultList = contactManager.querySearchMethod(query)
+        		ArrayList<String> cutList = new ArrayList<String>();
+        		ArrayList<String> resultList = contactManager.querySearchMethod(query);
         		if(startingIndex > resultList.size()-1) {return "";}
         		else {
         			for (int i = startingIndex; i < finishIndex; i++)
@@ -140,9 +122,6 @@ public class main {
         		}
         		
         		return mainMapper.writeValueAsString(cutList);
-        		 
-        		 * */
-        		return "placeholder";
         	}
         	
         });
